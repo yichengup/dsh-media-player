@@ -11,29 +11,31 @@ Because the asset is written as a session event, the media node survives session
 
 ## Install
 
-Install into a profile (the bundle is added to `dsh.profile.bundles` and reconciled automatically). Use whichever source suits you:
+Add the bundle to a profile, then restart the DSH web service:
 
 ```sh
-# From npm (after publishing this package)
-dsh plugin --profile web add dsh-media-player
-
-# From a Git repository (pnpm-style git spec; works with a private repo + SSH too)
 dsh plugin --profile web add github:yichengup/dsh-media-player
-
-# From a local path (links the source)
-dsh plugin --profile web add <absolute path to this package>
-dsh plugin --profile web add file:<absolute path to this package>
 ```
 
-> `dsh plugin add` is a `pnpm add` forwarder, so any pnpm-supported specifier works
-> (`npm:`, `github:`, `git+https:`, `file:`, tarball URL, `@scope/name@version`).
-
-Restart the DSH web service for the bundle to take effect. Verify:
+Any pnpm-valid specifier works too (`npm:`, `git+https:`, `file:`, tarball URL, `@scope/name@version`); for a local checkout pass its absolute path or the `file:` form. Verify the bundle is picked up:
 
 ```sh
 dsh --profile web --dump-config        # media-player appears in bundles
-node -e "console.log(require.resolve('dsh-media-player'))"
 ```
+
+## Session history compatibility
+
+The plugin writes a durable `plugin/media-add` session event. A stock harness build does not know this
+out-of-repo event type, so replaying a session that contains it fails with:
+
+```
+SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
+```
+
+To read such sessions, follow [SESSION-EVENT-REGISTRATION.zh-CN.md](SESSION-EVENT-REGISTRATION.zh-CN.md):
+register `plugin/media-add` in the harness's `known-event-types` table (edit the persistence-catalog
+generator, run `pnpm run gen-persistence-catalog`, then rebuild the harness). That registration is the
+shortest path — it also lets already-written old logs load.
 
 ## Usage
 

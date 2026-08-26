@@ -11,29 +11,27 @@
 
 ## 安装
 
-装进某个 profile（自动把 bundle 加进 `dsh.profile.bundles` 并 reconcile）。按需选择来源：
+把 bundle 装进某个 profile，然后重启 DSH web 服务：
 
 ```sh
-# npm（发布本包后）
-dsh plugin --profile web add dsh-media-player
-
-# Git 仓库（pnpm 风格 git 说明符；私有仓库 + SSH 亦可）
 dsh plugin --profile web add github:yichengup/dsh-media-player
-
-# 本地路径（链接源码）
-dsh plugin --profile web add <本包的绝对路径>
-dsh plugin --profile web add file:<本包的绝对路径>
 ```
 
-> `dsh plugin add` 是 `pnpm add` 的转发器，因此任何 pnpm 支持的说明符都可用
-> （`npm:`、`github:`、`git+https:`、`file:`、tarball URL、`@scope/name@version`）。
-
-装完需重启 DSH web 服务才生效。验证：
+任何 pnpm 支持的说明符也都可以（`npm:`、`git+https:`、`file:`、tarball URL、`@scope/name@version`）；本地检出版本直接传其绝对路径或 `file:` 形式。验证 bundle 已加载：
 
 ```sh
 dsh --profile web --dump-config        # media-player 出现在 bundles
-node -e "console.log(require.resolve('dsh-media-player'))"
 ```
+
+## 会话历史兼容性
+
+该插件会写入一条持久化的 `plugin/media-add` 会话事件。普通的 harness 构建并不认识这种仓库外事件类型，因此重放含该事件的会话会报错：
+
+```
+SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
+```
+
+若要读取这类会话，请按 [SESSION-EVENT-REGISTRATION.zh-CN.md](SESSION-EVENT-REGISTRATION.zh-CN.md) 操作：把 `plugin/media-add` 注册进 harness 的 `known-event-types` 表（修改持久化目录生成器、运行 `pnpm run gen-persistence-catalog`，再重建 harness）。这种注册是最短的路径——它也能让已写入的旧日志被读取。
 
 ## 使用
 
