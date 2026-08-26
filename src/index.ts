@@ -8,6 +8,7 @@
  * @module dsh-media-player
  */
 
+import { resolve as resolvePath } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { GenericCallView } from '@deepseek-ai/dsh-tools'
@@ -76,8 +77,12 @@ function payloadFor(url: string, mimeType: string, title: string | undefined, al
 }
 
 export function apply(ctx: Context, config: MediaPlayerConfig = {}): void {
-  const allowedRoots = config.allowedRoots ?? defaultAllowedRoots()
-  registerFileRoute(ctx, allowedRoots)
+  // Runtime-mutable allowed roots. Seeded from config (or platform defaults) and
+  // then read live by the file route and `media_add` on every use, so a grant or
+  // revocation takes effect immediately without a restart.
+  const state = { roots: [...(config.allowedRoots ?? defaultAllowedRoots())] }
+
+  registerFileRoute(ctx, () => state.roots)
 
   ctx.tools.register(defineTool({
     name: 'media_add',
@@ -136,7 +141,7 @@ export function apply(ctx: Context, config: MediaPlayerConfig = {}): void {
       if (list.length === 0) {
         throw new Error('media_add requires at least one url')
       }
-      const items = list.map(url => payloadFor(url, args.mimeType, args.title, allowedRoots))
+      const items = list.map(url => payloadFor(url, args.mimeType, args.title, state.roots))
       const session = exec.agent?.session
       if (session === undefined) {
         throw new Error('media_add requires an owning agent session')
@@ -145,6 +150,61 @@ export function apply(ctx: Context, config: MediaPlayerConfig = {}): void {
       return { items }
     },
     presentCall: mediaCallView,
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'media_roots',
+    description: 'List the local directories the media_add tool may currently serve files from.',
+    parameters: {},
+    output: {
+      schema: { type: 'object', additionalProperties: false, properties: { roots: { type: 'array', required: true, items: { type: 'string' } } } },
+      render: (_args, value) => [{ type: 'text', text: `Allowed media roots: ${value.roots.length} (${value.roots.join(', ') || 'none'})` }],
+    },
+    isConcurrencySafe: () => true,
+    async execute() {
+      return { roots: [...state.roots] }
+    },
+    presentCall: () => ({ card: 'generic', title: 'Media roots', kind: 'other', rawInput: {} }),
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'media_grant_root',
+    description: 'Grant an additional local directory that media_add may serve, effective immediately. This extends read access to local files; in a deployment that requires confirmation, gate it with a `tools/pre-execute` approval policy.',
+    parameters: {
+      dir: { type: 'string', required: true, description: 'Absolute directory path to allow.' },
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: false, properties: { roots: { type: 'array', required: true, items: { type: 'string' } } } },
+      render: (_args, value) => [{ type: 'text', text: `Allowed media roots: ${value.roots.length} (${value.roots.join(', ') || 'none'})` }],
+    },
+    isConcurrencySafe: () => true,
+    async execute(args) {
+      const abs = resolvePath(args.dir)
+      if (!state.roots.some(root => resolvePath(root) === abs)) {
+        state.roots.push(abs)
+      }
+      return { roots: [...state.roots] }
+    },
+    presentCall: () => ({ card: 'generic', title: 'Grant media root', kind: 'other', rawInput: { dir: '...' } }),
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'media_revoke_root',
+    description: 'Revoke a previously granted local directory so media_add no longer serves files from it. Effective immediately. Do not revoke the platform default media folders.',
+    parameters: {
+      dir: { type: 'string', required: true, description: 'Absolute directory path to disallow.' },
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: false, properties: { roots: { type: 'array', required: true, items: { type: 'string' } } } },
+      render: (_args, value) => [{ type: 'text', text: `Allowed media roots: ${value.roots.length} (${value.roots.join(', ') || 'none'})` }],
+    },
+    isConcurrencySafe: () => true,
+    async execute(args) {
+      const abs = resolvePath(args.dir)
+      state.roots = state.roots.filter(root => resolvePath(root) !== abs)
+      return { roots: [...state.roots] }
+    },
+    presentCall: () => ({ card: 'generic', title: 'Revoke media root', kind: 'other', rawInput: { dir: '...' } }),
   }))
 }
 

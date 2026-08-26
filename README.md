@@ -104,6 +104,13 @@ media_add(urls=["/a.png", "/b.jpg", "/c.webp"], mimeType="image/png")  # 一次�
   name: 'dsh-media-player'
 ```
 
+**运行时可授权目录（不用重启）。** 允许的目录是**运行时可变**的，直接在你的对话里调用这些工具即可增删：
+- `media_roots` —— 列出当前允许的目录（只读）；
+- `media_grant_root(dir)` —— 授权一个额外目录，**立即生效**；
+- `media_revoke_root(dir)` —— 撤销一个已授权目录，立即生效（勿撤销平台默认媒体目录）。
+
+> ⚠️ 这是**权限**操作（扩大模型可读取的本地文件范围）。因此建议在部署中配合 `tools/pre-execute` 授权策略，让「加目录」这类放权经由**用户确认**，而不是由模型自行决定。
+
 ## 文件
 
 `lib/index.js`（host）· `lib/client.js`（browser）· `cordis.patch.yml`（bundle）· `src/`（源码）。
@@ -112,5 +119,5 @@ media_add(urls=["/a.png", "/b.jpg", "/c.webp"], mimeType="image/png")  # 一次�
 
 - **本地文件仅限 loopback。** 本地路径通过仅限本机（loopback）的路由提供；远程/移动端客户端无法获取本地字节。
 - **无加载时校验。** URL/MIME 在每次调用时校验；错误 URL 在调用时失败，而非插件加载时。
-- **无权限策略。** 工具不请求 `ctx.approval` 直接执行；需要确认的部署须添加 `tools/pre-execute` 策略。
+- **无内置授权策略。** `media_grant_root` 这类授权工具不请求 `ctx.approval` 直接执行；需要「用户确认才放权」的部署，请在装配时加 `tools/pre-execute` 策略，把授权工具的调用纳入确认流程。
 - **host 半需要 webserver。** 本地文件路由注册在 DSH webserver 服务上；没有 webserver 的 headless profile 中，远程 URL 节点仍可渲染，但本地路径不可用。

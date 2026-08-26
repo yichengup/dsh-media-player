@@ -113,10 +113,13 @@ async function serveFile(req: IncomingMessage, res: ServerResponse, allowedRoots
 
 /**
  * Register the local-file route on the shared webserver (no-op when absent).
+ * The allowed roots are read from `getRoots()` on **each request**, so a runtime
+ * change (settings edit, an approval-gated grant) takes effect immediately
+ * without a restart.
  * @param ctx - registrant context; the webserver is optional.
- * @param allowedRoots - directories whose contents may be served.
+ * @param getRoots - returns the directories whose contents may currently be served.
  */
-export function registerFileRoute(ctx: Context, allowedRoots: readonly string[]): void {
+export function registerFileRoute(ctx: Context, getRoots: () => readonly string[]): void {
   const webserver = ctx.get('webServer')
   if (webserver === undefined) return
   webserver.register({
@@ -133,7 +136,7 @@ export function registerFileRoute(ctx: Context, allowedRoots: readonly string[])
         res.end()
         return
       }
-      await serveFile(req, res, allowedRoots)
+      await serveFile(req, res, getRoots())
     },
   })
 }
