@@ -7,7 +7,7 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf-8'))
 
 const problems = []
-const required = ['lib/index.js', 'lib/client.js', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'CHANGELOG.md']
+const required = ['lib/index.js', 'lib/client.js', 'cordis.patch.yml', 'README.md', 'README.en.md', 'LICENSE', 'CHANGELOG.md']
 for (const file of required) {
   try {
     await access(path.join(root, file))

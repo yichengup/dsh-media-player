@@ -1,80 +1,83 @@
 # dsh-media-player
 
-[中文](README.zh-CN.md)
+[English](README.en.md)
 
-A single-package, dual-end DeepSeek Harness (DSH) plugin that lets a model surface **playable video/audio or an image** inline in the chat, from an absolute http(s) URL **or a local file path**. Mounted as a profile bundle through `cordis.patch.yml`; no dsh source changes. Runs on macOS, Windows and Linux.
+一个单包、双端的 DeepSeek Harness（DSH）插件：让模型把**可播放的视频/音频或图片**直接内联到聊天里，既可传入绝对 http(s) URL，也可传入**本地文件路径**。以 bundle 方式通过 `cordis.patch.yml` 挂载，不改 dsh 源码。支持 macOS / Windows / Linux。
 
-- **Host half** (`lib/index.js`): registers the model-facing `media_add` tool. The model passes an absolute http(s) media URL **or a local file path** plus its MIME type; the tool validates them and appends a durable `plugin/media-add` session event. Local files are served over a loopback-only route with HTTP Range support (so the player can seek).
-- **Browser half** (`lib/client.js`): declares a `media` `ChatNodeDataMap` key, folds each `plugin/media-add` event into a media chat node, and renders it as a native `<video controls>` / `<audio controls>` player, or an image thumbnail with a fullscreen preview (wheel/button zoom in and out, drag panning, reset, Escape to close) via the `conversation.chat.node` slot.
+- **host 半**（`lib/index.js`）：注册模型面向的 `media_add` 工具。模型传入绝对 http(s) 媒体 URL **或本地文件路径**与 MIME 类型，工具校验后追加一条持久化的 `plugin/media-add` 会话事件。本地文件通过仅限本机（loopback）的路由提供，支持 HTTP Range（播放器可拖动进度）。
+- **browser 半**（`lib/client.js`）：声明 `media` 的 `ChatNodeDataMap` key，把每条 `plugin/media-add` 事件折叠成一个媒体聊天节点，并通过 `conversation.chat.node` 插槽渲染为原生 `<video controls>` / `<audio controls>` 播放器，或带全屏预览的图片缩略图（滚轮/按钮正负缩放、拖拽平移、重置、Esc 关闭）。
 
-Because the asset is written as a session event, the media node survives session reload, replay, and continuation (model-visible == logged).
+因为媒体是作为会话事件写入的，媒体节点在会话重载、回放与续聊后仍然存在（模型可见 == 已记录）。
 
-## Install
+## 安装
 
-Add the bundle to a profile, then restart the DSH web service:
+把 bundle 装进某个 profile，然后重启 DSH web 服务：
 
 ```sh
 dsh plugin --profile web add github:yichengup/dsh-media-player
 ```
 
-Any pnpm-valid specifier works too (`npm:`, `git+https:`, `file:`, tarball URL, `@scope/name@version`); for a local checkout pass its absolute path or the `file:` form. Verify the bundle is picked up:
+任何 pnpm 支持的说明符也都可以（`npm:`、`git+https:`、`file:`、tarball URL、`@scope/name@version`）；本地检出版本直接传其绝对路径或 `file:` 形式。验证 bundle 已加载：
 
 ```sh
-dsh --profile web --dump-config        # media-player appears in bundles
+dsh --profile web --dump-config        # media-player 出现在 bundles
 ```
 
-## Session history compatibility
+## 遇到会话报错？先看这里
 
-The plugin writes a durable `plugin/media-add` session event. A stock harness build does not know this
-out-of-repo event type, so replaying a session that contains it fails with:
+装好插件、用 `media_add` 添过媒体之后，如果**重新打开之前的会话**时出现下面这个错误：
 
 ```
 SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
 ```
 
-To read such sessions, follow [SESSION-EVENT-REGISTRATION.zh-CN.md](SESSION-EVENT-REGISTRATION.zh-CN.md):
-register `plugin/media-add` in the harness's `known-event-types` table (edit the persistence-catalog
-generator, run `pnpm run gen-persistence-catalog`, then rebuild the harness). That registration is the
-shortest path — it also lets already-written old logs load.
+**原因**：插件往会话里写入了一类 harness 默认不认识的事件（`plugin/media-add`）。出于安全，harness 遇到不认识的事件类型会拒绝重建该会话日志。
 
-## Usage
+**快速解决（3 步）**：让 harness「认识」这类事件即可。完整操作请看 [SESSION-EVENT-REGISTRATION.zh-CN.md（会话事件注册与修复指南）](SESSION-EVENT-REGISTRATION.zh-CN.md)。
+1. 在 harness 仓库的 `scripts/gen-persistence-catalog.ts` 里，把 `plugin/media-add` 加进**下游事件注册表**；
+2. 运行 `pnpm run gen-persistence-catalog` 重新生成（会自动更新 `known-event-types.ts` 与目录文档）；
+3. 重建 harness 并重启。
 
-Ask the model to add media, or call the tool directly:
+> 这是最短路径：既解决当前报错，也能让之前已写入的旧会话日志重新被读取。
+
+## 使用
+
+让模型添加媒体，或直接调用工具：
 
 ```sh
 media_add(url="https://example.com/clip.mp4", mimeType="video/mp4", title="Demo clip")
-media_add(url="/home/me/Videos/demo.mp4", mimeType="video/mp4")   # local, path auto-served
-media_add(urls=["/a.png", "/b.jpg", "/c.webp"], mimeType="image/png")  # one node, side by side
+media_add(url="/home/me/Videos/demo.mp4", mimeType="video/mp4")   # 本地路径，自动走服务
+media_add(urls=["/a.png", "/b.jpg", "/c.webp"], mimeType="image/png")  # 一次多张，并排展示
 ```
 
-The chat then renders an inline player, or an image thumbnail whose fullscreen preview supports zoom (in/out) and panning. A batch (`urls`) renders as one side-by-side grid node. Supported MIME types: `video/mp4`, `video/webm`, `audio/mpeg`, `audio/wav`, `audio/ogg`, `audio/mp4`, `image/png`, `image/jpeg`, `image/webp`, `image/gif`.
+聊天就会渲染一个内联播放器，或带全屏预览的图片缩略图（可正负缩放、平移）。一次传多张（`urls`）会渲染成一个并排网格节点。支持的 MIME 类型：`video/mp4`、`video/webm`、`audio/mpeg`、`audio/wav`、`audio/ogg`、`audio/mp4`、`image/png`、`image/jpeg`、`image/webp`、`image/gif`。
 
-## Model-facing API
+## 模型面向的 API
 
-| Tool | Args | Behavior |
+| 工具 | 参数 | 行为 |
 |---|---|---|
-| `media_add` | `urls` (array of http(s) URLs **or local paths**), `url` (single shorthand), `mimeType` (required enum; inferred for local paths), `title` (optional) | Validates, appends one `plugin/media-add` event carrying `{ items }`, returns `{ items }`. A batch renders as one side-by-side grid node. |
+| `media_add` | `urls`（http(s) URL **或本地路径**数组）、`url`（单张简写）、`mimeType`（必填枚举；本地路径自动推断）、`title`（可选） | 校验后追加一条携带 `{ items }` 的 `plugin/media-add` 事件，返回 `{ items }`。多张渲染为一个并排网格节点。 |
 
-## Config
+## 配置
 
-| Key | Default | Meaning |
+| 键 | 默认值 | 含义 |
 |---|---|---|
-| `allowedRoots` | `[~/Downloads, ~/Movies, ~/Videos, ~/Music]` | Absolute directories whose local files the `media_add` tool may serve. Local paths outside these roots are refused (403). Add more via config. |
+| `allowedRoots` | `[~/Downloads, ~/Movies, ~/Videos, ~/Music]` | 允许 `media_add` 提供本地文件的绝对目录；超出这些根目录的本地路径会被拒绝（403）。可用配置追加更多目录。 |
 
-The plugin mounts without configuration; the tool validates its inputs per call.
+插件无需配置即可挂载；工具每次调用时校验输入。
 
 ```yaml
 - id: media-player
   name: 'dsh-media-player'
 ```
 
-## Files
+## 文件
 
-`lib/index.js` (host) · `lib/client.js` (browser) · `cordis.patch.yml` (bundle) · `src/` (source).
+`lib/index.js`（host）· `lib/client.js`（browser）· `cordis.patch.yml`（bundle）· `src/`（源码）。
 
-## Known Limitations
+## 已知限制
 
-- **Local files are loopback-only.** A local path is served over a loopback-only route (the GUI and the host must be on the same machine); a remote/mobile client cannot fetch local bytes.
-- **No launch-time validation.** URL/MIME validation happens per call; a bad URL fails at the call, not at plugin load.
-- **No permission policy.** The tool runs without `ctx.approval`; a deployment that needs confirmation must add a `tools/pre-execute` policy.
-- **Host half needs the webserver.** The local-file route registers on the DSH webserver service; in a headless profile without a webserver, remote URL nodes still render but local paths are unavailable.
+- **本地文件仅限 loopback。** 本地路径通过仅限本机（loopback）的路由提供；远程/移动端客户端无法获取本地字节。
+- **无加载时校验。** URL/MIME 在每次调用时校验；错误 URL 在调用时失败，而非插件加载时。
+- **无权限策略。** 工具不请求 `ctx.approval` 直接执行；需要确认的部署须添加 `tools/pre-execute` 策略。
+- **host 半需要 webserver。** 本地文件路由注册在 DSH webserver 服务上；没有 webserver 的 headless profile 中，远程 URL 节点仍可渲染，但本地路径不可用。
