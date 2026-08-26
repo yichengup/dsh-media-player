@@ -31,14 +31,15 @@ dsh --profile web --dump-config        # media-player 出现在 bundles
 SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
 ```
 
-**原因**：插件往会话里写入了一类 harness 默认不认识的事件（`plugin/media-add`）。出于安全，harness 遇到不认识的事件类型会拒绝重建该会话日志。
+**多半不用修。** 大多数新版本 DSH 已经内置了对 `plugin/media-add` 事件的支持——请先**直接再打开那个会话试试**，或确认你用的是近期 DSH 版本。不报错就无需任何操作。
 
-**快速解决（3 步）**：让 harness「认识」这类事件即可。完整操作请看 [SESSION-EVENT-REGISTRATION.zh-CN.md（会话事件注册与修复指南）](SESSION-EVENT-REGISTRATION.zh-CN.md)。
-1. 在 harness 仓库的 `scripts/gen-persistence-catalog.ts` 里，把 `plugin/media-add` 加进**下游事件注册表**；
-2. 运行 `pnpm run gen-persistence-catalog` 重新生成（会自动更新 `known-event-types.ts` 与目录文档）；
-3. 重建 harness 并重启。
+**只有在确实报错（或你用较旧 DSH 构建）时才需要动手**：核心是让 DSH「认识」这个事件类型。完整、保姆级的分步指引（含如何装 pnpm、如何定位 DSH 源码根目录、每步命令）请看：
+[SESSION-EVENT-REGISTRATION.zh-CN.md（会话报错修复指南）](SESSION-EVENT-REGISTRATION.zh-CN.md)。概要如下：
+1. 进入 **DSH 源码根目录**（不是本插件目录），`ls package.json` 确认路径正确；
+2. 打开 `scripts/gen-persistence-catalog.ts`，在 `DOWNSTREAM_KNOWN_EVENT_TYPES` 数组里**确认或加入**一行 `'plugin/media-add',`；
+3. 运行 `pnpm run gen-persistence-catalog` → `pnpm run verify-persistence-catalog` → `pnpm run build:lib:host`，重建后**重启 DSH**。
 
-> 这是最短路径：既解决当前报错，也能让之前已写入的旧会话日志重新被读取。
+> 这既能解决当前报错，也能让之前已写入的旧会话日志重新被读取。
 
 ## 使用
 

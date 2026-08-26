@@ -25,20 +25,24 @@ dsh --profile web --dump-config        # media-player appears in bundles
 
 ## Session log error? Read this first
 
-After installing and adding media with `media_add`, reopening a previous session may fail with:
+After installing and using `media_add`, reopening a previous session may fail with:
 
 ```
 SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
 ```
 
-**Why:** the plugin writes a session event type the stock harness does not know (`plugin/media-add`). For safety, the harness refuses to rebuild a log it does not recognize.
+**You may not need to fix anything.** Most recent DSH builds already recognize the `plugin/media-add`
+event — just try reopening the session, or confirm you are on a current DSH build. If it loads, you are done.
 
-**Quick fix (3 steps):** make the harness recognize the event type. Full details: [SESSION-EVENT-REGISTRATION.zh-CN.md](SESSION-EVENT-REGISTRATION.zh-CN.md).
-1. In the harness repo's `scripts/gen-persistence-catalog.ts`, add `plugin/media-add` to the downstream event registry.
-2. Run `pnpm run gen-persistence-catalog` to regenerate (updates `known-event-types.ts` and the catalog doc).
-3. Rebuild the harness and restart.
+Only when it genuinely fails (or you run an older DSH build) is a change needed: make DSH recognize the
+event type. The full, beginner-friendly walkthrough — including how to install `pnpm`, how to locate the
+DSH source root, and every command — is in
+[SESSION-EVENT-REGISTRATION.zh-CN.md](SESSION-EVENT-REGISTRATION.zh-CN.md). In short:
+1. Change into the **DSH source root** (not this plugin dir) and confirm with `ls package.json`;
+2. In `scripts/gen-persistence-catalog.ts`, ensure `DOWNSTREAM_KNOWN_EVENT_TYPES` includes `'plugin/media-add',`;
+3. Run `pnpm run gen-persistence-catalog` → `pnpm run verify-persistence-catalog` → `pnpm run build:lib:host`, then restart DSH.
 
-> This is the shortest path: it fixes the error now and also lets previously written session logs load.
+> This fixes the error now and also lets previously written session logs load.
 
 ## Usage
 
