@@ -23,7 +23,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Package metadata for publication: `repository`, `homepage`, `bugs`,
   `keywords`, and `publishConfig` (public npm access).
-- `LICENSE` (Apache-2.0) and `CHANGELOG.md` shipped with the package.
+- `LICENSE` (MIT) and `CHANGELOG.md` shipped with the package.
 - GitHub Actions CI building and testing on `ubuntu-latest`, `windows-latest`,
   and `macos-latest`, plus a tag-driven npm publish workflow.
 - Cross-platform default media roots: `~/Downloads`, `~/Movies`, `~/Videos`,
