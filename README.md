@@ -31,7 +31,12 @@ dsh --profile web --dump-config        # media-player 出现在 bundles
 SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
 ```
 
-**多半不用修。** 大多数新版本 DSH 已经内置了对 `plugin/media-add` 事件的支持——请先**直接再打开那个会话试试**，或确认你用的是近期 DSH 版本。不报错就无需任何操作。
+**是否要修，取决于你的 DSH 版本。** `plugin/media-add` 是**第三方插件**声明的事件——官方 DSH 核心**默认不认识它**（官方不会为某个第三方插件预先注册事件类型）。因此：
+
+- 如果你用的是**官方原版** DSH，通常**会**遇到这个报错，需要按下述步骤把事件注册进去；
+- 只有当你用的 DSH **已经应用过该项注册**（例如本仓库的修改版，生成器 `DOWNSTREAM_KNOWN_EVENT_TYPES` 已含 `plugin/media-add`），才能跳过这一步。
+
+判定方式：先**直接重开会话**试试；若报错，按下面步骤处理（官方原版的大概率需要）。
 
 **只有在确实报错（或你用较旧 DSH 构建）时才需要动手**：核心是让 DSH「认识」这个事件类型。完整、保姆级的分步指引（含如何装 pnpm、如何定位 DSH 源码根目录、每步命令）请看：
 [SESSION-EVENT-REGISTRATION.zh-CN.md（会话报错修复指南）](SESSION-EVENT-REGISTRATION.zh-CN.md)。概要如下：

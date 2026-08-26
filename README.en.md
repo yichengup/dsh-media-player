@@ -31,12 +31,16 @@ After installing and using `media_add`, reopening a previous session may fail wi
 SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
 ```
 
-**You may not need to fix anything.** Most recent DSH builds already recognize the `plugin/media-add`
-event — just try reopening the session, or confirm you are on a current DSH build. If it loads, you are done.
+**Whether you need to fix it depends on your DSH build.** `plugin/media-add` is a **third-party plugin**
+event — the official DSH core does not know it by default (it does not pre-register event types for a
+specific plugin). So:
 
-Only when it genuinely fails (or you run an older DSH build) is a change needed: make DSH recognize the
-event type. The full, beginner-friendly walkthrough — including how to install `pnpm`, how to locate the
-DSH source root, and every command — is in
+- On an **official DSH build** you will typically hit this error and need the registration steps below;
+- Only if your DSH build already applied that registration (e.g. this repo's modified build, whose
+  generator `DOWNSTREAM_KNOWN_EVENT_TYPES` already lists `plugin/media-add`) can you skip it.
+
+To check: just **reopen the session** — if it errors, apply the steps below (likely needed on official builds).
+The full, beginner-friendly walkthrough (installing `pnpm`, locating the DSH source root, every command) is in
 [SESSION-EVENT-REGISTRATION.zh-CN.md](SESSION-EVENT-REGISTRATION.zh-CN.md). In short:
 1. Change into the **DSH source root** (not this plugin dir) and confirm with `ls package.json`;
 2. In `scripts/gen-persistence-catalog.ts`, ensure `DOWNSTREAM_KNOWN_EVENT_TYPES` includes `'plugin/media-add',`;
