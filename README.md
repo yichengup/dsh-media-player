@@ -15,12 +15,21 @@
 
 **A. 你是使用者 · 已安装 DSH** —— 用 `dsh` 命令（对已部署实例操作）
 
+裸 `dsh` 只有在「DSH 已被**全局安装**进 PATH」时才有效。若你敲 `dsh` 提示命令找不到，先**用与装 DSH 相同的方式全局装一次**：
+
+```sh
+npm install -g @deepseek-ai/dsh        # 用 npm 装 DSH 的人
+pnpm add -g @deepseek-ai/dsh           # 用 pnpm 装 DSH 的人
+```
+
+装进 PATH 后，再给某个 profile 加插件：
+
 ```sh
 dsh plugin --profile web add github:yichengup/dsh-media-player
 dsh --profile web --dump-config        # 验证 media-player 出现在 bundles
 ```
 
-> 适用：你**已装好 DSH**、只是给它加插件。命令是裸的 `dsh`。
+> **关键：用哪个包管理器装的 DSH，装插件就用哪个。** npm 全局装 → 裸 `dsh` 即可；用 pnpm 装的 → 那一步也带 `pnpm`（`pnpm dsh ...`）。若你没全局装 dsh、而是在 DSH 源码仓库里跑，请用下方**场景 B**。
 
 **B. 你在 DSH 源码仓库里（开发者 / 修改版）** —— 用 `pnpm`（仓库侧脚本，经 workspace 调用本地 dsh）
 
@@ -32,7 +41,16 @@ pnpm dsh --profile web --dump-config
 > 适用：你 **clone 了 DSH 源码**、在仓库目录里干活。命令逻辑与 `dsh` 完全一样，只是带 `pnpm` 前缀。
 
 **怎么选：** 带不带 `pnpm` 前缀，取决你是否正**站在 DSH 源码仓库目录里**——在仓库里用 `pnpm`，对已装实例用 `dsh`。装完需**重启 DSH（或源码开发 watcher）**才生效。任何 pnpm 支持的说明符也都可用（`npm:`、`git+https:`、`file:`、tarball URL、`@scope/name@version`）；本地检出版本直接传其绝对路径或 `file:` 形式。
+
 ## 遇到会话报错？先看这里
+
+**🙋 最简单：把报错交给 AI 解决。** 直接在你自己 DSH / AI 助手对话里**重新打开那个会话**，把下面的报错**整段**贴给它，说：
+
+> 「重开会话报 `SessionFormatUnsupportedError`，unknown to this harness。请帮我让 DSH 认识 `plugin/media-add` 这个事件，按步骤解决。」
+
+AI 会带你判断该不该修、定位 DSH 源码根目录、改生成器、跑命令，并在你确认后代为执行。**对不熟悉源码的人，这是第一选择。**
+
+—— 下面是手动解法 ——
 
 装好插件、用 `media_add` 添过媒体之后，如果**重新打开之前的会话**时出现下面这个错误：
 

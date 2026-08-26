@@ -15,12 +15,21 @@ Two cases — pick yours:
 
 **A. You are a user · DSH already installed** — use `dsh` (operating an installed instance)
 
+Bare `dsh` only works if DSH is **globally installed into PATH**. If `dsh`: command not found, first install it globally the same way you installed DSH:
+
+```sh
+npm install -g @deepseek-ai/dsh        # if you installed DSH with npm
+pnpm add -g @deepseek-ai/dsh           # if you installed DSH with pnpm
+```
+
+Once it is on PATH, add the plugin to a profile:
+
 ```sh
 dsh plugin --profile web add github:yichengup/dsh-media-player
 dsh --profile web --dump-config        # verify media-player appears in bundles
 ```
 
-> Applies when you already have DSH installed and are just adding a plugin; the command is bare `dsh`.
+> **Key: use the same package manager you used to install DSH.** npm global install → bare `dsh`; if you used pnpm, prefix with `pnpm` (`pnpm dsh ...`). If you did not install dsh globally but run inside the DSH source repo, use **case B** below.
 
 **B. You are inside the DSH source repo (developer / modified build)** — use `pnpm` (repo-side scripts, calling the local dsh via the workspace)
 
@@ -34,6 +43,17 @@ pnpm dsh --profile web --dump-config
 **How to choose:** the `pnpm` prefix depends on whether you are standing in the DSH source repo — use `pnpm` there, `dsh` against an installed instance. Restart DSH (or the source dev watcher) to take effect. Any pnpm-valid specifier also works (`npm:`, `git+https:`, `file:`, tarball URL, `@scope/name@version`); for a local checkout pass its absolute path or the `file:` form.
 
 ## Session log error? Read this first
+
+**🙋 Easiest: hand the error to an AI.** In your DSH / AI assistant, just **reopen the session**, paste the
+error below **in full**, and say:
+
+> "Reopening the session errors with `SessionFormatUnsupportedError`, unknown to this harness. Please help
+> me make DSH recognize the `plugin/media-add` event and fix it step by step."
+
+The AI will help you judge whether a fix is needed, locate the DSH source root, edit the generator, run the
+`pnpm` commands, and (after you confirm) do it for you. **If you are not comfortable with source, start here.**
+
+— the manual fix, below —
 
 After installing and using `media_add`, reopening a previous session may fail with:
 
