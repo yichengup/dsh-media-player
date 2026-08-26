@@ -47,7 +47,12 @@ dsh --profile web --dump-config      # verify
 | Inside the DSH source repo (**including git clone**) | `pnpm dsh ...` |
 | Using an installed dsh (not in the source repo) | `dsh ...` (install dsh globally into PATH first) |
 
-> Restart DSH (or the source dev watcher) for it to take effect. The plugin source is irrelevant — `github:`, `npm:`, `file:`, `git+https:` etc. all leave the choice above unchanged.
+> Restart DSH (or the source dev watcher) for it to take effect.
+>
+> **⚠️ Install source: this plugin is not yet published to npm. There are only two ways to install it —**
+> ① **From GitHub**: `github:yichengup/dsh-media-player`
+> ② **From a local path**: `file:` or an absolute path
+> (`npm:`, a tarball URL, or a published `@scope/name` are **not available yet**; they will be documented once it is published.)
 
 ## Session log error? Read this first
 

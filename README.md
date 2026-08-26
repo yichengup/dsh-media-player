@@ -47,7 +47,12 @@ dsh --profile web --dump-config      # 验证
 | DSH 源码仓库里（**含 git clone**）| `pnpm dsh ...` |
 | 用已安装的 dsh（不在源码仓库）| `dsh ...`（要先把 dsh 全局装进 PATH）|
 
-> 装完需**重启 DSH（或源码开发 watcher）**才生效。插件来源随意（`github:`、`npm:`、`file:`、`git+https:` 等）都不改变上面的选择。
+> 装完需**重启 DSH（或源码开发 watcher）**才生效。
+>
+> **⚠️ 安装来源：本插件尚未发布 npm 包，目前只有两种装法——**
+> ① **从 GitHub**：`github:yichengup/dsh-media-player`
+> ② **本地路径**：`file:` 或绝对路径
+> （`npm:`、tarball URL、发布版 `@scope/name` 这些方式**暂不可用**，等发布 npm 后再补充。）
 
 ## 遇到会话报错？先看这里
 
