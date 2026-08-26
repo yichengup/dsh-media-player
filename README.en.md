@@ -11,36 +11,43 @@ Because the asset is written as a session event, the media node survives session
 
 ## Install
 
-Two cases — pick yours:
+First ask yourself: **are you inside the DSH source repo?** (a `git clone`, or local dev — your CWD is the repo root and `package.json` is visible)
 
-**A. You are a user · DSH already installed** — use `dsh` (operating an installed instance)
+### Case 1 · In the DSH source repo (git clone / local dev) → always use pnpm
 
-Bare `dsh` only works if DSH is **globally installed into PATH**. If `dsh`: command not found, first install it globally the same way you installed DSH:
+> **A `git clone` gives you a source repo**, so git clone users also belong here → **use `pnpm`**, not bare `dsh`.
 
-```sh
-npm install -g @deepseek-ai/dsh        # if you installed DSH with npm
-pnpm add -g @deepseek-ai/dsh           # if you installed DSH with pnpm
-```
-
-Once it is on PATH, add the plugin to a profile:
-
-```sh
-dsh plugin --profile web add github:yichengup/dsh-media-player
-dsh --profile web --dump-config        # verify media-player appears in bundles
-```
-
-> **Key: use the same package manager you used to install DSH.** npm global install → bare `dsh`; if you used pnpm, prefix with `pnpm` (`pnpm dsh ...`). If you did not install dsh globally but run inside the DSH source repo, use **case B** below.
-
-**B. You are inside the DSH source repo (developer / modified build)** — use `pnpm` (repo-side scripts, calling the local dsh via the workspace)
+The `dsh` inside the repo is a local command, so you must call it via `pnpm dsh`:
 
 ```sh
 pnpm dsh --profile web add github:yichengup/dsh-media-player
-pnpm dsh --profile web --dump-config
+pnpm dsh --profile web --dump-config    # verify
 ```
 
-> Applies when you cloned the DSH source and work in the repo. The command is the same as `dsh`, just prefixed with `pnpm`.
+### Case 2 · Not in the source repo (an installed dsh) → use bare dsh
 
-**How to choose:** the `pnpm` prefix depends on whether you are standing in the DSH source repo — use `pnpm` there, `dsh` against an installed instance. Restart DSH (or the source dev watcher) to take effect. Any pnpm-valid specifier also works (`npm:`, `git+https:`, `file:`, tarball URL, `@scope/name@version`); for a local checkout pass its absolute path or the `file:` form.
+Prerequisite: `dsh` is **globally installed into PATH** (install it first if not; either way is fine):
+
+```sh
+npm install -g @deepseek-ai/dsh      # if you used npm
+pnpm add -g @deepseek-ai/dsh         # if you used pnpm
+```
+
+Then add the plugin to a profile:
+
+```sh
+dsh plugin --profile web add github:yichengup/dsh-media-player
+dsh --profile web --dump-config      # verify
+```
+
+**Don't get them confused — remember this table:**
+
+| Where you are | Command to use |
+| --- | --- |
+| Inside the DSH source repo (**including git clone**) | `pnpm dsh ...` |
+| Using an installed dsh (not in the source repo) | `dsh ...` (install dsh globally into PATH first) |
+
+> Restart DSH (or the source dev watcher) for it to take effect. The plugin source is irrelevant — `github:`, `npm:`, `file:`, `git+https:` etc. all leave the choice above unchanged.
 
 ## Session log error? Read this first
 

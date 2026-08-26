@@ -11,36 +11,43 @@
 
 ## 安装
 
-两种场景，选你对应的：
+先问自己一句：**你现在是在 DSH 源码仓库里吗？**（git clone 下来、或本地开发，当前目录在仓库根、能看到 `package.json`）
 
-**A. 你是使用者 · 已安装 DSH** —— 用 `dsh` 命令（对已部署实例操作）
+### 情况 1 · 在 DSH 源码仓库里（git clone / 本地开发）→ 一律用 pnpm
 
-裸 `dsh` 只有在「DSH 已被**全局安装**进 PATH」时才有效。若你敲 `dsh` 提示命令找不到，先**用与装 DSH 相同的方式全局装一次**：
+> **git clone 下来的就是源码仓库**，所以 git clone 的人也归这一类、**用 pnpm**，别用裸 `dsh`。
 
-```sh
-npm install -g @deepseek-ai/dsh        # 用 npm 装 DSH 的人
-pnpm add -g @deepseek-ai/dsh           # 用 pnpm 装 DSH 的人
-```
-
-装进 PATH 后，再给某个 profile 加插件：
-
-```sh
-dsh plugin --profile web add github:yichengup/dsh-media-player
-dsh --profile web --dump-config        # 验证 media-player 出现在 bundles
-```
-
-> **关键：用哪个包管理器装的 DSH，装插件就用哪个。** npm 全局装 → 裸 `dsh` 即可；用 pnpm 装的 → 那一步也带 `pnpm`（`pnpm dsh ...`）。若你没全局装 dsh、而是在 DSH 源码仓库里跑，请用下方**场景 B**。
-
-**B. 你在 DSH 源码仓库里（开发者 / 修改版）** —— 用 `pnpm`（仓库侧脚本，经 workspace 调用本地 dsh）
+因为仓库里的 `dsh` 是本地命令，必须 `pnpm dsh` 才能调用：
 
 ```sh
 pnpm dsh --profile web add github:yichengup/dsh-media-player
-pnpm dsh --profile web --dump-config
+pnpm dsh --profile web --dump-config    # 验证
 ```
 
-> 适用：你 **clone 了 DSH 源码**、在仓库目录里干活。命令逻辑与 `dsh` 完全一样，只是带 `pnpm` 前缀。
+### 情况 2 · 不在源码仓库（用已安装的 dsh）→ 用裸 dsh
 
-**怎么选：** 带不带 `pnpm` 前缀，取决你是否正**站在 DSH 源码仓库目录里**——在仓库里用 `pnpm`，对已装实例用 `dsh`。装完需**重启 DSH（或源码开发 watcher）**才生效。任何 pnpm 支持的说明符也都可用（`npm:`、`git+https:`、`file:`、tarball URL、`@scope/name@version`）；本地检出版本直接传其绝对路径或 `file:` 形式。
+前提：`dsh` 已**全局安装**进 PATH（没有就先装一次，方式随你）：
+
+```sh
+npm install -g @deepseek-ai/dsh      # 用 npm 装的人
+pnpm add -g @deepseek-ai/dsh         # 用 pnpm 装的人
+```
+
+装好后给 profile 加插件：
+
+```sh
+dsh plugin --profile web add github:yichengup/dsh-media-player
+dsh --profile web --dump-config      # 验证
+```
+
+**别混淆，就记这张表：**
+
+| 你现在在哪儿 | 用什么命令 |
+| --- | --- |
+| DSH 源码仓库里（**含 git clone**）| `pnpm dsh ...` |
+| 用已安装的 dsh（不在源码仓库）| `dsh ...`（要先把 dsh 全局装进 PATH）|
+
+> 装完需**重启 DSH（或源码开发 watcher）**才生效。插件来源随意（`github:`、`npm:`、`file:`、`git+https:` 等）都不改变上面的选择。
 
 ## 遇到会话报错？先看这里
 
