@@ -11,17 +11,27 @@ Because the asset is written as a session event, the media node survives session
 
 ## Install
 
-Add the bundle to a profile, then restart the DSH web service:
+Two cases — pick yours:
+
+**A. You are a user · DSH already installed** — use `dsh` (operating an installed instance)
 
 ```sh
 dsh plugin --profile web add github:yichengup/dsh-media-player
+dsh --profile web --dump-config        # verify media-player appears in bundles
 ```
 
-Any pnpm-valid specifier works too (`npm:`, `git+https:`, `file:`, tarball URL, `@scope/name@version`); for a local checkout pass its absolute path or the `file:` form. Verify the bundle is picked up:
+> Applies when you already have DSH installed and are just adding a plugin; the command is bare `dsh`.
+
+**B. You are inside the DSH source repo (developer / modified build)** — use `pnpm` (repo-side scripts, calling the local dsh via the workspace)
 
 ```sh
-dsh --profile web --dump-config        # media-player appears in bundles
+pnpm dsh --profile web add github:yichengup/dsh-media-player
+pnpm dsh --profile web --dump-config
 ```
+
+> Applies when you cloned the DSH source and work in the repo. The command is the same as `dsh`, just prefixed with `pnpm`.
+
+**How to choose:** the `pnpm` prefix depends on whether you are standing in the DSH source repo — use `pnpm` there, `dsh` against an installed instance. Restart DSH (or the source dev watcher) to take effect. Any pnpm-valid specifier also works (`npm:`, `git+https:`, `file:`, tarball URL, `@scope/name@version`); for a local checkout pass its absolute path or the `file:` form.
 
 ## Session log error? Read this first
 
