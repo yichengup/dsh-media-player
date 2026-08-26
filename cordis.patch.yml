@@ -1,0 +1,18 @@
+# dsh-media-player bundle patch: inserts the plugin row into the web profile.
+# Applied as a profile bundle layer (the `dsh.bundle.patch` manifest field).
+# Install with:  dsh plugin --profile web add <this package path>
+#
+# One package, both halves: the node half (exports ".") runs in the host
+# process and registers the model-facing media_add tool; the browser half
+# (declared by `dsh.client`, served from lib/client.js) turns each written
+# plugin/media-add session event into a chat node rendered as a <video>/<audio>
+# player. No dsh source changes.
+- insert:
+    - id: media-player
+      name: 'dsh-media-player'
+      config:
+        allowedRoots:
+          - D:/Agent/deepseek-harness/dsh-output
+          - C:/Users/Administrator/Downloads
+          - C:/Users/Administrator/Videos
+          - C:/Users/Administrator/Music

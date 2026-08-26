@@ -1,0 +1,13 @@
+# lib, cordis.patch.yml, READMEs, LICENSE and CHANGELOG are published via the
+# package.json "files" allowlist; everything below is excluded.
+node_modules/
+src/
+test/
+scripts/
+tsconfig.json
+tsdown.config.ts
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.gitignore
+.npmignore
+.github/

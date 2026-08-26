@@ -1,0 +1,6 @@
+# Standalone workspace root: keeps this plugin's dependency install independent
+# of the parent deepseek-harness workspace so its own node_modules resolves the
+# @deepseek-ai/* runtime types.
+packages: []
+allowBuilds:
+  esbuild: set this to true or false
