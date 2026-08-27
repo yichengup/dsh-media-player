@@ -54,41 +54,32 @@ dsh --profile web --dump-config      # verify
 > ② **From a local path**: `file:` or an absolute path
 > (`npm:`, a tarball URL, or a published `@scope/name` are **not available yet**; they will be documented once it is published.)
 
-## Session log error? Read this first
+## `SessionFormatUnsupportedError` when reopening a session?
 
-**🙋 Easiest: hand the error to an AI.** In your DSH / AI assistant, just **reopen the session**, paste the
-error below **in full**, and say:
+Only possible on an **official DSH build** after you added media with `media_add` and then **reopened an old session**. `plugin/media-add` is a third-party plugin event that the official core does not know by default — for safety it refuses to rebuild a session that carries an unrecognized, non-ignorable event type. **The data is not broken**; DSH just needs to "know" this event type. If your DSH build already registered it, skip step 2.
 
-> "Reopening the session errors with `SessionFormatUnsupportedError`, unknown to this harness. Please help
-> me make DSH recognize the `plugin/media-add` event and fix it step by step."
+**Run all commands below from the DSH source root** (the repo where you cloned / installed DSH source, **not** this plugin dir; confirm it is correct by checking `ls package.json` lists the file).
 
-The AI will help you judge whether a fix is needed, locate the DSH source root, edit the generator, run the
-`pnpm` commands, and (after you confirm) do it for you. **If you are not comfortable with source, start here.**
+1. **Add one registration line**: open `scripts/gen-persistence-catalog.ts`, find the `DOWNSTREAM_KNOWN_EVENT_TYPES` array, and add `'plugin/media-add',` if it is not already there (skip if present):
 
-— the manual fix, below —
+   ```ts
+   const DOWNSTREAM_KNOWN_EVENT_TYPES: readonly string[] = [
+     // ... other official events
+     'plugin/media-add',
+   ]
+   ```
 
-After installing and using `media_add`, reopening a previous session may fail with:
+2. **Regenerate + verify + rebuild + restart** (still in the DSH source root):
 
-```
-SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
-```
+   ```sh
+   pnpm run gen-persistence-catalog      # regenerate the known-event table
+   pnpm run verify-persistence-catalog   # verify (should print "... are up to date.")
+   pnpm run build:lib:host               # rebuild the DSH host
+   ```
 
-**Whether you need to fix it depends on your DSH build.** `plugin/media-add` is a **third-party plugin**
-event — the official DSH core does not know it by default (it does not pre-register event types for a
-specific plugin). So:
+   Then **restart the DSH process** and reopen the previously rejected session — it should load now.
 
-- On an **official DSH build** you will typically hit this error and need the registration steps below;
-- Only if your DSH build already applied that registration (e.g. this repo's modified build, whose
-  generator `DOWNSTREAM_KNOWN_EVENT_TYPES` already lists `plugin/media-add`) can you skip it.
-
-To check: just **reopen the session** — if it errors, apply the steps below (likely needed on official builds).
-The full, beginner-friendly walkthrough (installing `pnpm`, locating the DSH source root, every command) is in
-[SESSION-EVENT-REGISTRATION.zh-CN.md](SESSION-EVENT-REGISTRATION.zh-CN.md). In short:
-1. Change into the **DSH source root** (not this plugin dir) and confirm with `ls package.json`;
-2. In `scripts/gen-persistence-catalog.ts`, ensure `DOWNSTREAM_KNOWN_EVENT_TYPES` includes `'plugin/media-add',`;
-3. Run `pnpm run gen-persistence-catalog` → `pnpm run verify-persistence-catalog` → `pnpm run build:lib:host`, then restart DSH.
-
-> This fixes the error now and also lets previously written session logs load.
+> ⚠️ Do not hand-edit the generated artifact `packages/core/session/src/known-event-types.ts` (the next generation overwrites it and verification reports stale); edit the generator `scripts/gen-persistence-catalog.ts` instead. Re-add the line after upgrading DSH (it is a repo file, so an upgrade may overwrite it).
 
 ## Usage
 

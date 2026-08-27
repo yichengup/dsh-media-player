@@ -54,36 +54,32 @@ dsh --profile web --dump-config      # 验证
 > ② **本地路径**：`file:` 或绝对路径
 > （`npm:`、tarball URL、发布版 `@scope/name` 这些方式**暂不可用**，等发布 npm 后再补充。）
 
-## 遇到会话报错？先看这里
+## 重开会话报 `SessionFormatUnsupportedError`？
 
-**🙋 最简单：把报错交给 AI 解决。** 直接在你自己 DSH / AI 助手对话里**重新打开那个会话**，把下面的报错**整段**贴给它，说：
+只在**官方原版 DSH** 上用 `media_add` 加过媒体、再**重新打开旧会话**时才可能遇到。因为 `plugin/media-add` 是第三方插件声明的事件，官方核心默认不认识它——出于安全，遇到不认识且未标记「可忽略」的事件会拒绝重建该会话。**不是数据坏了**，只是让 DSH「认识」这类事件即可。若你的 DSH 已注册过该事件，直接跳过第 2 步。
 
-> 「重开会话报 `SessionFormatUnsupportedError`，unknown to this harness。请帮我让 DSH 认识 `plugin/media-add` 这个事件，按步骤解决。」
+**以下命令均在 DSH 源码根目录执行**（你 clone / 安装 DSH 源码的那个仓库根目录，**不是**本插件目录；用 `ls package.json` 能列出文件来判断路径正确）。
 
-AI 会带你判断该不该修、定位 DSH 源码根目录、改生成器、跑命令，并在你确认后代为执行。**对不熟悉源码的人，这是第一选择。**
+1. **加一行注册**：打开 `scripts/gen-persistence-catalog.ts`，找到 `DOWNSTREAM_KNOWN_EVENT_TYPES` 数组，若没有则加入 `'plugin/media-add',`（已有则跳过）：
 
-—— 下面是手动解法 ——
+   ```ts
+   const DOWNSTREAM_KNOWN_EVENT_TYPES: readonly string[] = [
+     // ... 其他官方事件
+     'plugin/media-add',
+   ]
+   ```
 
-装好插件、用 `media_add` 添过媒体之后，如果**重新打开之前的会话**时出现下面这个错误：
+2. **重新生成 + 校验 + 重建 + 重启**（仍在 DSH 源码根目录）：
 
-```
-SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable; refusing to interpret the log
-```
+   ```sh
+   pnpm run gen-persistence-catalog      # 重新生成已知事件表
+   pnpm run verify-persistence-catalog   # 校验（应输出 "... are up to date."）
+   pnpm run build:lib:host               # 重建 DSH 宿主
+   ```
 
-**是否要修，取决于你的 DSH 版本。** `plugin/media-add` 是**第三方插件**声明的事件——官方 DSH 核心**默认不认识它**（官方不会为某个第三方插件预先注册事件类型）。因此：
+   然后**重启 DSH 进程**，再打开之前被拒的会话，应能正常加载。
 
-- 如果你用的是**官方原版** DSH，通常**会**遇到这个报错，需要按下述步骤把事件注册进去；
-- 只有当你用的 DSH **已经应用过该项注册**（例如本仓库的修改版，生成器 `DOWNSTREAM_KNOWN_EVENT_TYPES` 已含 `plugin/media-add`），才能跳过这一步。
-
-判定方式：先**直接重开会话**试试；若报错，按下面步骤处理（官方原版的大概率需要）。
-
-**只有在确实报错（或你用较旧 DSH 构建）时才需要动手**：核心是让 DSH「认识」这个事件类型。完整、保姆级的分步指引（含如何装 pnpm、如何定位 DSH 源码根目录、每步命令）请看：
-[SESSION-EVENT-REGISTRATION.zh-CN.md（会话报错修复指南）](SESSION-EVENT-REGISTRATION.zh-CN.md)。概要如下：
-1. 进入 **DSH 源码根目录**（不是本插件目录），`ls package.json` 确认路径正确；
-2. 打开 `scripts/gen-persistence-catalog.ts`，在 `DOWNSTREAM_KNOWN_EVENT_TYPES` 数组里**确认或加入**一行 `'plugin/media-add',`；
-3. 运行 `pnpm run gen-persistence-catalog` → `pnpm run verify-persistence-catalog` → `pnpm run build:lib:host`，重建后**重启 DSH**。
-
-> 这既能解决当前报错，也能让之前已写入的旧会话日志重新被读取。
+> ⚠️ 别手改自动生成产物 `packages/core/session/src/known-event-types.ts`（下次生成会覆盖并报 stale），要在生成器 `scripts/gen-persistence-catalog.ts` 里加。升级 DSH 后需重新加一次（该文件是仓库内文件，升级可能覆盖）。
 
 ## 使用
 
