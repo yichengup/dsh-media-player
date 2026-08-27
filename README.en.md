@@ -20,7 +20,7 @@ First ask yourself: **are you inside the DSH source repo?** (a `git clone`, or l
 The `dsh` inside the repo is a local command, so you must call it via `pnpm dsh`:
 
 ```sh
-pnpm dsh --profile web add github:yichengup/dsh-media-player
+pnpm dsh plugin --profile web add github:yichengup/dsh-media-player
 pnpm dsh --profile web --dump-config    # verify
 ```
 

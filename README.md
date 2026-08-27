@@ -20,7 +20,7 @@
 因为仓库里的 `dsh` 是本地命令，必须 `pnpm dsh` 才能调用：
 
 ```sh
-pnpm dsh --profile web add github:yichengup/dsh-media-player
+pnpm dsh plugin --profile web add github:yichengup/dsh-media-player
 pnpm dsh --profile web --dump-config    # 验证
 ```
 
